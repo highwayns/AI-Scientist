@@ -5,6 +5,10 @@ import os.path as osp
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
+
+# 只屏蔽 Mean of empty slice / invalid value encountered
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="numpy")
 
 # LOAD FINAL RESULTS:
 datasets = ["shakespeare_char", "enwik8", "text8"]
