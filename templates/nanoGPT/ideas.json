@@ -15,24 +15,24 @@
         "Interestingness": 4,
         "Feasibility": 6,
         "Novelty": 2,
-        "novel": false
-    },
-    {
-        "Name": "curriculum_learning",
-        "Title": "Curriculum Learning for Character-Level Language Models: Adapting Training Sample Complexity",
-        "Experiment": "Implement a curriculum learning strategy by modifying the get_batch function to initially sample batches with simpler character sequences (e.g., higher frequency characters or repetitive patterns) and gradually introduce more complex sequences as training progresses. Track the convergence speed and final performance compared to the baseline model without curriculum learning.",
-        "Interestingness": 7,
-        "Feasibility": 5,
-        "Novelty": 6,
         "novel": true
     },
     {
-        "Name": "adaptive_attention",
-        "Title": "Adaptive Attention Mechanism: Dynamically Scaling Focus in Transformer Models",
-        "Experiment": "Enhance the CausalSelfAttention class by normalizing the attention scores using a dynamically computed factor based on input sequence properties, such as variance or entropy of token embeddings, before applying the softmax function. This avoids introducing new parameters while still allowing adaptive focus. Evaluate the model's performance in convergence speed and accuracy against the baseline model.",
+        "Name": "curriculum_learning",
+        "Title": "Curriculum Learning: Enhancing Language Model Training through Gradual Complexity",
+        "Experiment": "Implement curriculum learning by modifying the get_batch function to initially sample simpler sequences, defined by shorter lengths or lower entropy in character distribution. Gradually increase the complexity of sequences by lengthening them or increasing character diversity as training progresses. Evaluate the impact on convergence speed, final performance, and generalization by comparing against a baseline model trained without curriculum learning.",
         "Interestingness": 8,
         "Feasibility": 6,
         "Novelty": 7,
+        "novel": false
+    },
+    {
+        "Name": "multi_task_learning",
+        "Title": "Integrating Multi-Task Learning: Enhancing Character-Level Language Models",
+        "Experiment": "Introduce a multi-task learning framework by modifying the training loop to include related tasks like next character prediction or character classification. Adjust the model to output logits for each task and implement a combined loss function to jointly optimize them. Evaluate the impact on the model's performance and convergence compared to a baseline single-task model.",
+        "Interestingness": 7,
+        "Feasibility": 5,
+        "Novelty": 6,
         "novel": true
     }
 ]
