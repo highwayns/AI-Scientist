@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader, random_split
 
 # ====================================================
 # Project Metadata
@@ -28,34 +29,14 @@ for d in dirs:
     os.makedirs(d, exist_ok=True)
 
 # ====================================================
-# Environment Requirements (requirements.txt sample)
-# ====================================================
-# pandas
-# numpy
-# torch
-# sakana_ai
-# scikit-learn
-# matplotlib
-
-# ====================================================
 # Data Loading & Preprocessing
 # ====================================================
 def load_data(path: str) -> pd.DataFrame:
-    """
-    加载实验数据
-    :param path: 数据文件路径
-    :return: pandas DataFrame
-    """
     df = pd.read_csv(path)
     return df
 
-
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    数据清洗与特征工程示例函数
-    """
     df = df.dropna()
-    # 示例：将 delivery_method 转为类别编码
     df['delivery_code'] = df['delivery_method'].map({
         'intravenous': 0,
         'subcutaneous': 1,
@@ -64,62 +45,70 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 # ====================================================
+# Custom Dataset
+# ====================================================
+class ASODataset(Dataset):
+    """
+    PyTorch Dataset for ASO study
+    DataFrame must contain: aso_sequence, delivery_code, age, dosage_mg, baseline_factor_level_pct, post_treatment_factor_level_pct
+    """
+    def __init__(self, df: pd.DataFrame):
+        self.sequences = df['aso_sequence'].tolist()
+        self.methods = torch.tensor(df['delivery_code'].values, dtype=torch.long)
+        # numeric features: age, dosage, baseline
+        self.numeric = torch.tensor(
+            df[['age', 'dosage_mg', 'baseline_factor_level_pct']].values,
+            dtype=torch.float32
+        )
+        # labels: improvement_pct
+        self.labels = torch.tensor(df['improvement_pct'].values, dtype=torch.float32)
+        self.base2idx = {'A':0,'T':1,'C':2,'G':3}
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        seq = self.sequences[idx]
+        seq_list = list(seq)
+        return seq_list, self.methods[idx], self.numeric[idx], self.labels[idx]
+
+# ====================================================
 # Model Definition
 # ====================================================
 class ASOPredictor(nn.Module):
-    """
-    基于寡核苷酸序列和临床特征的改善预测模型
-    """
     def __init__(self, seq_len=15, base_embed_dim=8, lstm_hidden=16, method_embed_dim=4, mlp_hidden=64):
         super().__init__()
         self.base2idx = {'A':0,'T':1,'C':2,'G':3}
         self.embedding = nn.Embedding(num_embeddings=4, embedding_dim=base_embed_dim)
         self.lstm = nn.LSTM(input_size=base_embed_dim, hidden_size=lstm_hidden, batch_first=True)
         self.method_emb = nn.Embedding(num_embeddings=3, embedding_dim=method_embed_dim)
-        # 输入维度：LSTM 输出 + 方法 embedding + 年龄、剂量、基线水平（3）
         self.fc = nn.Sequential(
             nn.Linear(lstm_hidden + method_embed_dim + 3, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, 1)  # 输出改善百分比预测
+            nn.Linear(mlp_hidden, 1)
         )
 
     def forward(self, sequences: list, methods: torch.Tensor, numeric_feats: torch.Tensor):
-        # 序列编码
         batch_size = len(sequences)
         seq_idx = torch.zeros((batch_size, len(sequences[0])), dtype=torch.long)
         for i, seq in enumerate(sequences):
             seq_idx[i] = torch.tensor([self.base2idx[b] for b in seq], dtype=torch.long)
-        x_embed = self.embedding(seq_idx)  # [B, L, E]
-        _, (h_n, _) = self.lstm(x_embed)  # h_n: [1, B, H]
-        seq_feat = h_n.squeeze(0)        # [B, H]
-        # 方法 embedding
-        method_feat = self.method_emb(methods)  # [B, M]
-        # 拼接所有特征
+        x_embed = self.embedding(seq_idx)
+        _, (h_n, _) = self.lstm(x_embed)
+        seq_feat = h_n.squeeze(0)
+        method_feat = self.method_emb(methods)
         x = torch.cat([seq_feat, method_feat, numeric_feats], dim=1)
         out = self.fc(x)
         return out
 
-
-def build_model() -> ASOPredictor:
-    """
-    实例化 ASOPredictor 模型
-    """
-    model = ASOPredictor(seq_len=15,
-                         base_embed_dim=8,
-                         lstm_hidden=16,
-                         method_embed_dim=4,
-                         mlp_hidden=64)
-    return model
-
 # ====================================================
-# Training & Validation
+# Training, Validation, Evaluation, Visualization
 # ====================================================
 def train(model, train_loader, optimizer, criterion, device='cpu'):
     model.train()
     for epoch in range(1, 11):
         epoch_loss = 0.0
-        for batch in train_loader:
-            seqs, methods, nums, labels = batch
+        for seqs, methods, nums, labels in train_loader:
             optimizer.zero_grad()
             preds = model(seqs, methods.to(device), nums.to(device))
             loss = criterion(preds.squeeze(), labels.to(device))
@@ -128,21 +117,16 @@ def train(model, train_loader, optimizer, criterion, device='cpu'):
             epoch_loss += loss.item()
         print(f"Epoch {epoch:02d}: Loss={epoch_loss/len(train_loader):.4f}")
 
-
 def validate(model, val_loader, criterion, device='cpu'):
     model.eval()
     val_loss = 0.0
     with torch.no_grad():
-        for batch in val_loader:
-            seqs, methods, nums, labels = batch
+        for seqs, methods, nums, labels in val_loader:
             preds = model(seqs, methods.to(device), nums.to(device))
             loss = criterion(preds.squeeze(), labels.to(device))
             val_loss += loss.item()
     print(f"Validation Loss={val_loss/len(val_loader):.4f}")
 
-# ====================================================
-# Evaluation & Results
-# ====================================================
 def evaluate(model, test_loader, device='cpu'):
     from sklearn.metrics import r2_score, mean_squared_error
     model.eval()
@@ -152,20 +136,15 @@ def evaluate(model, test_loader, device='cpu'):
             preds = model(seqs, methods.to(device), nums.to(device)).squeeze().cpu().numpy()
             all_preds.extend(preds)
             all_labels.extend(labels.numpy())
-    metrics = {
-        'R2': r2_score(all_labels, all_preds),
-        'MSE': mean_squared_error(all_labels, all_preds)
-    }
+    metrics = {'R2': r2_score(all_labels, all_preds), 'MSE': mean_squared_error(all_labels, all_preds)}
     with open(os.path.join('results', 'evaluation.txt'), 'w') as f:
         f.write(str(metrics))
     return metrics
 
-# ====================================================
-# Visualization
-# ====================================================
 def visualize(metrics):
     import matplotlib.pyplot as plt
     names, values = zip(*metrics.items())
+    plt.figure()
     plt.bar(names, values)
     plt.title('Evaluation Metrics')
     plt.savefig(os.path.join('results', 'metrics_bar.png'))
@@ -175,5 +154,33 @@ def visualize(metrics):
 # ====================================================
 if __name__ == "__main__":
     print(f"Starting experiment: {project_name}")
-    # TODO: 数据加载、DataLoader 构建、训练配置代码
-    pass
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    data_path = os.path.join(base_dir, 'data', 'dataset.csv')
+    df = load_data(data_path)
+    df = preprocess_data(df)
+
+    dataset = ASODataset(df)
+    total = len(dataset)
+    train_size = int(0.8 * total)
+    val_size = int(0.1 * total)
+    test_size = total - train_size - val_size
+    train_ds, val_ds, test_ds = random_split(dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(42))
+
+    train_loader = DataLoader(train_ds, batch_size=16, shuffle=True)
+    val_loader   = DataLoader(val_ds, batch_size=16)
+    test_loader  = DataLoader(test_ds, batch_size=16)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = ASOPredictor().to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    criterion = nn.MSELoss()
+
+    train(model, train_loader, optimizer, criterion, device)
+    validate(model, val_loader, criterion, device)
+
+    metrics = evaluate(model, test_loader, device)
+    visualize(metrics)
+
+    print("Experiment completed.")
