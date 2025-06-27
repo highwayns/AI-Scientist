@@ -1,0 +1,49 @@
+{
+  "project": "基于dify生成反义寡核苷酸（ASO）在血友病患者中的应用与优化研究",
+  "ideas": [
+    {
+      "id": 1,
+      "title": "剂量-疗效关系探索",
+      "description": "测试不同ASO剂量 (5, 15, 30, 50 mg) 对凝血因子水平改善的影响，评估最优剂量区间。",
+      "parameters": {
+        "dosage_mg": [5, 15, 30, 50]
+      }
+    },
+    {
+      "id": 2,
+      "title": "给药方式对比",
+      "description": "比较静脉注射、皮下注射与肌肉注射在相同剂量下的吸收效率和副作用评分差异。",
+      "parameters": {
+        "delivery_method": ["intravenous", "subcutaneous", "intramuscular"]
+      }
+    },
+    {
+      "id": 3,
+      "title": "序列优化敏感性分析",
+      "description": "基于不同15nt ASO序列变体测试其对目标mRNA抑制效果的差异，筛选高效序列。",
+      "parameters": {
+        "aso_sequence": [
+          "ATCGGATCAGTCGAT",
+          "CGTAGCTAGCTAGCT",
+          "GCTAGCTCGATCGTA"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "年龄分层响应分析",
+      "description": "将患者按年龄 (<30, 30-50, >50) 分组，评估不同年龄组的ASO疗效与安全性差异。",
+      "parameters": {
+        "age_group": ["<30", "30-50", ">50"]
+      }
+    },
+    {
+      "id": 5,
+      "title": "联合给药方案评估",
+      "description": "研究ASO与辅助药物（如凝血因子替代品）联合使用对疗效的协同作用。",
+      "parameters": {
+        "co_treatment": ["factor_replacement", "placebo"]
+      }
+    }
+  ]
+}

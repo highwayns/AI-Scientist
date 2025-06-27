@@ -1,0 +1,18 @@
+[
+    {
+      "id": 1,
+      "title": "剂量-疗效关系探索",
+      "description": "测试不同ASO剂量 (5, 15, 30, 50 mg) 对凝血因子水平改善的影响，评估最优剂量区间。",
+      "parameters": {
+        "dosage_mg": [5, 15, 30, 50]
+      }
+    },
+    {
+      "id": 2,
+      "title": "给药方式对比",
+      "description": "比较静脉注射、皮下注射与肌肉注射在相同剂量下的吸收效率和副作用评分差异。",
+      "parameters": {
+        "delivery_method": ["intravenous", "subcutaneous", "intramuscular"]
+      }
+    }
+]
