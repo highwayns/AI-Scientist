@@ -48,19 +48,13 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 # Custom Dataset
 # ====================================================
 class ASODataset(Dataset):
-    """
-    PyTorch Dataset for ASO study
-    DataFrame must contain: aso_sequence, delivery_code, age, dosage_mg, baseline_factor_level_pct, post_treatment_factor_level_pct
-    """
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df):
         self.sequences = df['aso_sequence'].tolist()
         self.methods = torch.tensor(df['delivery_code'].values, dtype=torch.long)
-        # numeric features: age, dosage, baseline
         self.numeric = torch.tensor(
-            df[['age', 'dosage_mg', 'baseline_factor_level_pct']].values,
+            df[['age','dosage_mg','baseline_factor_level_pct']].values,
             dtype=torch.float32
         )
-        # labels: improvement_pct
         self.labels = torch.tensor(df['improvement_pct'].values, dtype=torch.float32)
         self.base2idx = {'A':0,'T':1,'C':2,'G':3}
 
@@ -69,8 +63,8 @@ class ASODataset(Dataset):
 
     def __getitem__(self, idx):
         seq = self.sequences[idx]
-        seq_list = list(seq)
-        return seq_list, self.methods[idx], self.numeric[idx], self.labels[idx]
+        seq_idx = torch.tensor([self.base2idx[b] for b in seq], dtype=torch.long)
+        return seq_idx, self.methods[idx], self.numeric[idx], self.labels[idx]
 
 # ====================================================
 # Model Definition
@@ -88,18 +82,15 @@ class ASOPredictor(nn.Module):
             nn.Linear(mlp_hidden, 1)
         )
 
-    def forward(self, sequences: list, methods: torch.Tensor, numeric_feats: torch.Tensor):
-        batch_size = len(sequences)
-        seq_idx = torch.zeros((batch_size, len(sequences[0])), dtype=torch.long)
-        for i, seq in enumerate(sequences):
-            seq_idx[i] = torch.tensor([self.base2idx[b] for b in seq], dtype=torch.long)
-        x_embed = self.embedding(seq_idx)
+    def forward(self, seq_idx: torch.Tensor, methods: torch.Tensor, numeric_feats: torch.Tensor):
+        device = seq_idx.device
+        x_embed = self.embedding(seq_idx)      # seq_idx 已经在 device 上
         _, (h_n, _) = self.lstm(x_embed)
-        seq_feat = h_n.squeeze(0)
-        method_feat = self.method_emb(methods)
-        x = torch.cat([seq_feat, method_feat, numeric_feats], dim=1)
-        out = self.fc(x)
-        return out
+        seq_feat    = h_n.squeeze(0)
+        method_feat = self.method_emb(methods)  # methods 也在 device 上
+        num_feat    = numeric_feats.to(device)
+        x           = torch.cat([seq_feat, method_feat, num_feat], dim=1)
+        return self.fc(x)
 
 # ====================================================
 # Training, Validation, Evaluation, Visualization
@@ -109,12 +100,19 @@ def train(model, train_loader, optimizer, criterion, device='cpu'):
     for epoch in range(1, 11):
         epoch_loss = 0.0
         for seqs, methods, nums, labels in train_loader:
+            # —— 关键：整批数据都 .to(device) —— 
+            seqs    = seqs.to(device)    
+            methods = methods.to(device)
+            nums    = nums.to(device)
+            labels  = labels.to(device)
+
             optimizer.zero_grad()
-            preds = model(seqs, methods.to(device), nums.to(device))
-            loss = criterion(preds.squeeze(), labels.to(device))
+            preds = model(seqs, methods, nums)
+            loss  = criterion(preds.squeeze(), labels)
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
+
         print(f"Epoch {epoch:02d}: Loss={epoch_loss/len(train_loader):.4f}")
 
 def validate(model, val_loader, criterion, device='cpu'):
