@@ -391,3 +391,9 @@ docker run -it -e OPENAI_API_KEY=$OPENAI_API_KEY \
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=SakanaAI/AI-Scientist&type=Date)](https://star-history.com/#SakanaAI/AI-Scientist&Date)
+
+## my command
+python launch_scientist.py --model "gpt-4o" --experiment nanoGPT_lite --num-ideas 2 --engine openalex --parallel 2
+python launch_scientist.py --model "gpt-4o" --experiment myGPT --num-ideas 1  --parallel 2 --engine openalex
+python launch_scientist.py --model "deepseek-reasoner" --experiment myGPT --num-ideas 1  --parallel 2 --engine openalex
+
