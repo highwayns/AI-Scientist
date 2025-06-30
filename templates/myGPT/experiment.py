@@ -83,13 +83,23 @@ class ASOPredictor(nn.Module):
         )
 
     def forward(self, seq_idx: torch.Tensor, methods: torch.Tensor, numeric_feats: torch.Tensor):
+        # 1. 先取统一的 device（取决于 seq_idx）
         device = seq_idx.device
-        x_embed = self.embedding(seq_idx)      # seq_idx 已经在 device 上
+        
+        # 2. 将所有输入都搬到同一个 device 上
+        seq_idx        = seq_idx.to(device)
+        methods        = methods.to(device)
+        numeric_feats  = numeric_feats.to(device)
+        
+        # 3. 正常前向
+        x_embed    = self.embedding(seq_idx)
         _, (h_n, _) = self.lstm(x_embed)
         seq_feat    = h_n.squeeze(0)
-        method_feat = self.method_emb(methods)  # methods 也在 device 上
-        num_feat    = numeric_feats.to(device)
-        x           = torch.cat([seq_feat, method_feat, num_feat], dim=1)
+        
+        method_feat = self.method_emb(methods)
+        num_feat    = numeric_feats
+        
+        x = torch.cat([seq_feat, method_feat, num_feat], dim=1)
         return self.fc(x)
 
 # ====================================================
@@ -170,7 +180,8 @@ if __name__ == "__main__":
     val_loader   = DataLoader(val_ds, batch_size=16)
     test_loader  = DataLoader(test_ds, batch_size=16)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
     model = ASOPredictor().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.MSELoss()
