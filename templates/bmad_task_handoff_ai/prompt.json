@@ -1,0 +1,134 @@
+{
+  "template_id": "bmad_task_handoff_ai",
+  "domain": "software_process_engineering",
+  "persona": {
+    "role": "聚焦AI辅助的任务切分与上下文交接机制的过程工程研究者",
+    "style": "假设驱动, 指标优先, 可复现优先, 以效度为核心"
+  },
+  "research_brief": {
+    "problem": "量化BMAD-Method中AI驱动的任务切分策略与上下文交接模型（context handoff）对跨角色协作与交付表现的影响，并刻画上下文丢失/噪声注入在交接链路中的作用。",
+    "context": "比较'BMAD+AI编排+结构化上下文包'与'传统手工切分+非结构化交接'。若有真实遥测（PR/Issue/评审网络/工单流转+文档链路），走观测；否则采用经分位校准的受控仿真。",
+    "hypotheses": [
+      "H1: 结构化上下文包（含意图、接口、依赖、证据指针）可显著降低交接丢失率与缺陷注入率。",
+      "H2: 合理的任务切分粒度与AI检索-压缩质量（RAG质量、窗口大小）共同决定上下文重用率与交付吞吐。",
+      "H3: 盲目细分任务在低质量交接下会导致返工上升（U形关系）。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib；可选 networkx。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的改动（切分策略、上下文包字段、RAG质量、窗口大小、门控策略），在保持计算量可控的情况下提升统计效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['bmad_ai_handoff','silo_manual_handoff']"
+    },
+    "config_schema": {
+      "task_granularity": "float  # 任务切分粒度(越大越细)",
+      "handoff_package_completeness": "float  # 上下文包完整度0~1",
+      "rag_quality": "float  # 检索-压缩质量0~1",
+      "llm_window_tokens": "int  # 上下文窗口大小",
+      "handoff_chain_length": "int  # 交接链长度",
+      "quality_gate_threshold": "float  # 质量门控0~1",
+      "wip_limit": "int",
+      "review_capacity": "int"
+    },
+    "results_json_keys": [
+      "metric/lead_time_median",
+      "metric/deploy_freq_per_week",
+      "metric/change_failure_rate",
+      "metric/mttr_hours",
+      "metric/handoff_loss_rate",
+      "metric/defects_per_handoff",
+      "metric/context_reuse_ratio",
+      "metric/token_cost_per_task",
+      "metric/cross_role_review_ratio",
+      "metric/role_entropy",
+      "metric/silo_index",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "handoff": [
+      "handoff_loss_rate = 交接中关键字段缺失/错误比例",
+      "defects_per_handoff = 每次交接引入缺陷的期望值",
+      "context_reuse_ratio = 后续任务直接复用上下文包的信息占比"
+    ],
+    "delivery": [
+      "lead_time (PR open→merge 中位数, 小时)",
+      "deploy_frequency (每周部署次数)",
+      "change_failure_rate (失败部署/总部署)",
+      "mttr (平均恢复时间, 小时)",
+      "token_cost_per_task (近似成本)"
+    ],
+    "collaboration": [
+      "cross_role_review_ratio = 跨角色评审/全部评审",
+      "role_entropy = PR修改文件涉及角色的熵",
+      "silo_index = 1 - 评审网络跨团队边占比(归一化)"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_main.png",
+      "fig_ablation.png",
+      "fig_handoff.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作",
+      "方法（切分与交接模型）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

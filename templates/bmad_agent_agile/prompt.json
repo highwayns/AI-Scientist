@@ -1,0 +1,126 @@
+{
+  "template_id": "bmad_agent_agile",
+  "domain": "software_process_engineering",
+  "persona": {
+    "role": "Process+ML researcher evaluating agent-based SDLC",
+    "style": "hypothesis-driven, metric-first, reproducibility-minded"
+  },
+  "research_brief": {
+    "problem": "Quantify how BMAD-Method agent-based development affects functional separation in agile teams and downstream delivery outcomes.",
+    "context": "Compare 'agent-based workflow (BMAD)' vs 'functionally-separated agile (roles siloed)'. Use real repo/issue telemetry when available; otherwise run controlled simulations calibrated to observed stats.",
+    "hypotheses": [
+      "H1: Agent-based workflows reduce functional separation (lower cross-role silo index, higher cross-discipline review ratio).",
+      "H2: Agent-based workflows improve delivery throughput without raising change-failure rate."
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "Install pandas, numpy, matplotlib, networkx; optional pydantic."
+  },
+  "idea_generation": {
+    "task_brief": "Propose small, testable modifications to evaluation design (metrics, sampling, ablations) that increase validity while keeping compute modest.",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "rank by (0.5*validity + 0.3*feasibility + 0.2*novelty)"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # for observational",
+      "sim_rounds": "int",
+      "seed": "int",
+      "treatments": "list[str]  # e.g. ['bmad_agent','silo_agile']"
+    },
+    "config_schema": {
+      "wip_limit": "int",
+      "review_capacity": "int",
+      "handoff_cost": "float",
+      "agent_orchestration_eff": "float",
+      "role_entropy_boost": "float"
+    },
+    "results_json_keys": [
+      "metric/lead_time_median",
+      "metric/deploy_freq_per_week",
+      "metric/change_failure_rate",
+      "metric/mttr_hours",
+      "metric/cross_role_review_ratio",
+      "metric/role_entropy",
+      "metric/wip_avg",
+      "metric/queue_time_share",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "delivery": [
+      "lead_time (PR open→merge median)",
+      "deploy_frequency (per week)",
+      "change_failure_rate (failed deploys/total)",
+      "mttr (mean time to restore)"
+    ],
+    "collaboration": [
+      "cross_role_review_ratio = cross-discipline reviews / total reviews",
+      "role_entropy = -Σ p(role_i)*log p(role_i) on changed files per PR",
+      "silo_index = 1 - normalized cross-team edges in review graph"
+    ],
+    "flow": [
+      "wip_avg",
+      "queue_time_share"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_main.png",
+      "fig_ablation.png",
+      "fig_network.png"
+    ],
+    "captions_expectation": "2 sentences each; mention sample size & effect size."
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "Abstract",
+      "Introduction",
+      "Background",
+      "Methodology",
+      "Metrics & Validity",
+      "Experiments",
+      "Results",
+      "Ablations",
+      "Threats to Validity",
+      "Limitations",
+      "Conclusion",
+      "References"
+    ],
+    "language": "English",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "title": "AI建议采纳率 × 质量门控阈值的交互消融",
+    "motivation": "AI代理能提升效率，但门控过宽/过严可能分别损害质量或效率。",
+    "design_change": "2×3 因子：accept_rate {0.3, 0.6} × gate {0.5, 0.7, 0.9}",
+    "expected_effect": "存在甜蜜点：中高采纳率 + 中高门控阈值最优。",
+    "metrics": [
+      "lead_time",
+      "deploy_freq_per_week",
+      "change_failure_rate"
+    ],
+    "threats_to_validity": "仿真简化；需用观测分位数校准。"
+  },
+  {
+    "title": "跨角色评审网络的结构性指标",
+    "motivation": "协作是网络现象；仅用比率难以刻画结构差异。",
+    "design_change": "引入silo_index（跨团队边比例的补数）并与role_entropy联合分析。",
+    "expected_effect": "BMAD+AI条件下，silo_index显著下降，role_entropy上升。",
+    "metrics": [
+      "cross_discipline_review_ratio",
+      "role_entropy",
+      "silo_index"
+    ],
+    "threats_to_validity": "团队规模混杂；用分层或归一化对齐。"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Graph-based collaboration index",
+    "motivation": "Siloing is relational; a review graph can expose cross-role edges.",
+    "design_change": "Add 'silo_index' via normalized inter-role edge ratio; test sensitivity vs. team size.",
+    "expected_effect": "Clearer separation signal between BMAD and siloed settings.",
+    "metrics": [
+      "cross_role_review_ratio",
+      "role_entropy",
+      "silo_index"
+    ],
+    "threats_to_validity": "Org reorg confounding; control by stratification."
+  },
+  {
+    "title": "WIP-limit × Orchestration efficiency ablation",
+    "motivation": "BMAD may rely on orchestration; test if gains vanish with high WIP.",
+    "design_change": "2×3 factorial: WIP {2,4} × agent_orchestration_eff {0.8,1.0,1.2}.",
+    "expected_effect": "Interaction: orchestration amplifies low-WIP throughput.",
+    "metrics": [
+      "lead_time",
+      "deploy_freq_per_week",
+      "queue_time_share"
+    ],
+    "threats_to_validity": "Sim realism; calibrate with observational quantiles."
+  }
+]

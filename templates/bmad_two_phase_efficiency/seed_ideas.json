@@ -1,0 +1,28 @@
+[
+  {
+    "title": "Phase-1投入 × 需求波动 × 批量规模的三因素实验",
+    "motivation": "理论上存在Phase-1投入的最优区间，受需求波动与批量规模调制。",
+    "design_change": "3×2×2: phase1{0.2,0.4,0.6} × volatility{0.2,0.6} × batch{3,8}",
+    "expected_effect": "在volatility=0.6时，phase1=0.4且batch=3最优（U形）。",
+    "metrics": [
+      "lead_time_median",
+      "cost_per_feature_unit",
+      "rework_rate",
+      "defect_leakage_ppk"
+    ],
+    "threats_to_validity": "仿真假设对规模敏感；需以观测分位数校准。"
+  },
+  {
+    "title": "评审质量与并行/在制约束的交互",
+    "motivation": "高质量评审可降低返工，但过多在制或并行可能稀释收益。",
+    "design_change": "2×3: review_quality{0.6,0.85} × parallelism{2,4,8}, wip_limit ∈ {3,6}",
+    "expected_effect": "wip_limit=3时收益明显；wip过大时排队与切换成本抬升。",
+    "metrics": [
+      "review_latency_hours",
+      "rework_rate",
+      "lead_time_median",
+      "change_failure_rate"
+    ],
+    "threats_to_validity": "评审等待分布建模简化；需要真实到达过程拟合。"
+  }
+]

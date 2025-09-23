@@ -1,0 +1,129 @@
+{
+  "template_id": "bmad_cross_role_ai",
+  "domain": "software_process_engineering",
+  "persona": {
+    "role": "面向软件过程与AI协同的研究者",
+    "style": "假设驱动, 指标优先, 可复现优先"
+  },
+  "research_brief": {
+    "problem": "量化BMAD-Method在敏捷AI驱动开发中对跨角色协作机制的影响及其对交付表现的作用路径。",
+    "context": "比较'BMAD-Method+AI代理编排'与'传统职能分离式敏捷'两种工作流。若有真实仓库遥测（PR/Issue/评审网络）则走观测分析；若无则采用经校准的受控仿真。",
+    "hypotheses": [
+      "H1: 引入BMAD-Method与AI代理后，跨角色评审与协作密度显著上升（cross_discipline_review_ratio↑、role_entropy↑、silo_index↓）。",
+      "H2: 在不提高变更失败率的前提下，交付吞吐得到改善（lead_time↓, deploy_frequency↑, mttr不显著上升）。",
+      "H3: AI代理建议的采纳率与质量门控（gate）阈值存在交互作用，过低阈值将削弱总体质量、过高阈值将削弱效率。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib, networkx（可选）。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的改动（指标、抽样、消融设计、参数设置），在保持计算量可控的情况下提高内外部效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式使用",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['bmad_ai','silo_agile']"
+    },
+    "config_schema": {
+      "wip_limit": "int",
+      "review_capacity": "int",
+      "handoff_cost": "float",
+      "ai_assist_coverage": "float  # AI建议覆盖比例 0~1",
+      "ai_suggestion_accept_rate": "float  # 采纳率 0~1",
+      "quality_gate_threshold": "float  # 质量门控阈值 0~1",
+      "orchestration_efficiency": "float  # 代理编排效率系数"
+    },
+    "results_json_keys": [
+      "metric/lead_time_median",
+      "metric/deploy_freq_per_week",
+      "metric/change_failure_rate",
+      "metric/mttr_hours",
+      "metric/cross_discipline_review_ratio",
+      "metric/role_entropy",
+      "metric/silo_index",
+      "metric/wip_avg",
+      "metric/queue_time_share",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "delivery": [
+      "lead_time (PR open→merge 中位数, 小时)",
+      "deploy_frequency (每周部署次数)",
+      "change_failure_rate (失败部署/总部署)",
+      "mttr (平均恢复时间, 小时)"
+    ],
+    "collaboration": [
+      "cross_discipline_review_ratio = 跨角色评审 / 全部评审",
+      "role_entropy = -Σ p(role_i)*log p(role_i) 基于PR修改文件的角色分布",
+      "silo_index = 1 - 评审网络中跨团队边/总边的归一化比例"
+    ],
+    "flow": [
+      "wip_avg",
+      "queue_time_share"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_main.png",
+      "fig_ablation.png",
+      "fig_network.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作",
+      "方法",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

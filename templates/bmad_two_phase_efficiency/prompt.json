@@ -1,0 +1,130 @@
+{
+  "template_id": "two_phase_efficiency",
+  "domain": "software_process_engineering",
+  "persona": {
+    "role": "研究两阶段（规划/实现）开发工作流对效率与成本影响的过程工程研究者",
+    "style": "假设驱动, 指标优先, 可复现优先"
+  },
+  "research_brief": {
+    "problem": "量化两阶段开发工作流（Phase-1: 需求/设计/评审；Phase-2: 实现/验证）对效率、质量与成本的影响；刻画不同投入强度与需求波动下的性价比。",
+    "context": "比较“两阶段流程（plan→implement）”与“单阶段直推（直接实现）”。若有真实仓库/需求工单/评审数据则走观测；否则采用受控仿真并以观测分位数校准参数。",
+    "hypotheses": [
+      "H1: 适度提升Phase-1评审质量可显著降低返工与缺陷泄漏，整体缩短Lead Time并降低每功能点成本。",
+      "H2: 在高需求波动场景，Phase-1过度投入将因频繁变更而折损净效益，存在最优投入区间（U形）。",
+      "H3: 批量规模与并行度与两阶段机制存在非线性耦合，过大批量会提高等待与返工率。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的机制与参数改动（Phase-1投入、评审质量、需求波动、批量规模、并行/在制）、消融设计与校准策略，以提升统计效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式CSV路径",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['two_phase','single_phase']"
+    },
+    "config_schema": {
+      "phase1_investment_ratio": "float  # Phase-1投入强度(时间/人力占比) 0~1",
+      "review_quality": "float  # 评审质量 0~1",
+      "requirement_volatility": "float  # 需求波动 0~1",
+      "batch_size": "int  # 单次提交/迭代的功能点数",
+      "parallelism": "int  # 并行度",
+      "wip_limit": "int",
+      "context_switch_cost": "float  # 上下文切换惩罚系数",
+      "engineer_cost_rate": "float  # 人力成本单位"
+    },
+    "results_json_keys": [
+      "metric/lead_time_median",
+      "metric/deploy_freq_per_week",
+      "metric/change_failure_rate",
+      "metric/mttr_hours",
+      "metric/rework_rate",
+      "metric/defect_leakage_ppk",
+      "metric/review_latency_hours",
+      "metric/cost_per_feature_unit",
+      "metric/test_pass_rate",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "efficiency_cost": [
+      "lead_time (PR open→merge 中位数, 小时)",
+      "deploy_frequency (每周部署次数)",
+      "cost_per_feature_unit (每功能点相对成本)"
+    ],
+    "quality": [
+      "rework_rate (返工比例)",
+      "defect_leakage_ppk (生产缺陷/千行或单位功能点)",
+      "test_pass_rate (测试通过率)"
+    ],
+    "process": [
+      "review_latency_hours (评审等待时长)",
+      "change_failure_rate (变更失败率)",
+      "mttr_hours (平均恢复时间)"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_efficiency.png",
+      "fig_quality.png",
+      "fig_sensitivity.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作",
+      "方法（两阶段流程）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

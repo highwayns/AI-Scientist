@@ -1,0 +1,133 @@
+{
+  "template_id": "bmad_devtest_quality",
+  "domain": "software_process_engineering",
+  "persona": {
+    "role": "专注Dev-Test一体化与质量工程的研究者",
+    "style": "假设驱动, 指标优先, 可复现优先, 强调工程有效性"
+  },
+  "research_brief": {
+    "problem": "在BMAD-Method框架下，设计并量化‘开发-测试一体化（Dev-Test Integrated）’的质量保障机制（质量门控+AI测试生成+左移策略+持续验证）对交付与质量的综合影响。",
+    "context": "对比‘BMAD一体化（AI测试生成、质量门控、左移、变更风险建模、流水线并行/缓存）’与‘传统分离式Dev/QA流程’。有真实遥测则观测分析；无则经分位校准的受控仿真。",
+    "hypotheses": [
+      "H1: 一体化机制在不显著提高变更失败率的情况下缩短Lead Time并提升部署频率。",
+      "H2: 组合‘高门控阈值×较高AI测试生成覆盖×较高变异分数目标’能显著降低缺陷泄漏。",
+      "H3: Flaky测试率与并行度、缓存策略存在交互；盲目并行在高flaky下会导致CFR↑。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib；可选使用 networkx。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的机制改动或消融（门控阈值、AI测试生成覆盖、变异分数目标、flaky抑制策略、并行度/缓存），在可控算力内提升内部与外部效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式CSV路径",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['bmad_integrated','silo_dev_qa']"
+    },
+    "config_schema": {
+      "quality_gate_threshold": "float  # 质量门控阈值0~1",
+      "ai_test_gen_coverage": "float  # AI生成测试覆盖0~1",
+      "test_coverage_target": "float  # 语句/分支覆盖目标0~1",
+      "mutation_score_target": "float  # 变异分数目标0~1",
+      "flaky_rate": "float  # Flaky测试基础率0~1",
+      "parallelism": "int  # CI并行度",
+      "pipeline_caching": "float  # 流水线缓存命中率0~1",
+      "change_size_loc": "int  # 变更规模估算（LOC）",
+      "risk_profile": "float  # 变更风险0~1（耦合/复杂度）"
+    },
+    "results_json_keys": [
+      "metric/lead_time_median",
+      "metric/deploy_freq_per_week",
+      "metric/change_failure_rate",
+      "metric/mttr_hours",
+      "metric/defect_leakage_ppk",
+      "metric/test_pass_rate",
+      "metric/test_coverage",
+      "metric/mutation_score",
+      "metric/flaky_fail_share",
+      "metric/pipeline_duration_min",
+      "metric/pipeline_cost_unit",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "delivery": [
+      "lead_time (PR open→merge 中位数, 小时)",
+      "deploy_frequency (每周部署次数)",
+      "change_failure_rate (失败部署/总部署)",
+      "mttr (平均恢复时间, 小时)",
+      "pipeline_duration_min (CI用时, 分钟)",
+      "pipeline_cost_unit (相对成本单位)"
+    ],
+    "quality": [
+      "defect_leakage_ppk = 进入生产的缺陷/千行代码",
+      "test_pass_rate = 通过用例/总用例",
+      "test_coverage = 语句/分支覆盖率",
+      "mutation_score = 变异分数",
+      "flaky_fail_share = 因flaky导致失败的占比"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_main.png",
+      "fig_quality.png",
+      "fig_cost.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作",
+      "方法（Dev-Test一体化机制）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

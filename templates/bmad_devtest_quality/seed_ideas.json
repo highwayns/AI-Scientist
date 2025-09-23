@@ -1,0 +1,27 @@
+[
+  {
+    "title": "质量门控阈值 × AI测试生成覆盖 × 变异分数目标的三因素实验",
+    "motivation": "强门控与高质量测试生成/变异得分的组合理论上可降低缺陷泄漏。",
+    "design_change": "3×2×2：gate{0.6,0.75,0.9} × ai_cov{0.4,0.7} × mut{0.5,0.75}",
+    "expected_effect": "gate≥0.75 且 ai_cov≥0.7 且 mut≥0.75 时，leakage显著下降且CFR不升高。",
+    "metrics": [
+      "defect_leakage_ppk",
+      "change_failure_rate",
+      "pipeline_duration_min"
+    ],
+    "threats_to_validity": "仿真假设偏乐观；需用观测数据分位数校准。"
+  },
+  {
+    "title": "Flaky抑制策略与并行/缓存的交互",
+    "motivation": "高并行在高flaky下可能放大无效重跑；缓存命中可缓解。",
+    "design_change": "2×3：flaky_rate{0.05,0.15} × parallelism{2,4,8}，加上 caching{0.3,0.7} 分层",
+    "expected_effect": "flaky高时并行=8会使CFR上升；caching=0.7可降低管线时长与成本。",
+    "metrics": [
+      "change_failure_rate",
+      "flaky_fail_share",
+      "pipeline_cost_unit",
+      "lead_time_median"
+    ],
+    "threats_to_validity": "flaky分布与真实场景不完全匹配；需要观测修正。"
+  }
+]

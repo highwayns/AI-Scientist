@@ -1,0 +1,27 @@
+[
+  {
+    "title": "结构化上下文包字段消融（意图/接口/依赖/证据）",
+    "motivation": "识别对交接损失率贡献最大的字段集合。",
+    "design_change": "对四类字段做逐一/组合消融，测 handoff_loss_rate 与 defects_per_handoff 变化。",
+    "expected_effect": "接口+证据指针是最关键组合。",
+    "metrics": [
+      "handoff_loss_rate",
+      "defects_per_handoff",
+      "lead_time"
+    ],
+    "threats_to_validity": "仿真中的字段重要性设定可能偏主观；需要观测校准。"
+  },
+  {
+    "title": "任务切分粒度 × RAG质量 × 窗口大小三因素实验",
+    "motivation": "过细切分在低质量交接下会放大损失；高质量RAG与大窗口可缓解。",
+    "design_change": "3×2×2：granularity{0.6,1.0,1.4} × rag{0.5,0.8} × window{8k,32k}。",
+    "expected_effect": "存在U形：粒度过细会恶化，32k窗口与高RAG可向右平移最优点。",
+    "metrics": [
+      "lead_time",
+      "context_reuse_ratio",
+      "token_cost_per_task",
+      "change_failure_rate"
+    ],
+    "threats_to_validity": "窗口→成本耦合；需报告成本-收益曲线。"
+  }
+]
