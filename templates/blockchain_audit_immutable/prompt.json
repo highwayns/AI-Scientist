@@ -1,0 +1,129 @@
+{
+  "template_id": "blockchain_audit_immutable",
+  "domain": "security_compliance",
+  "persona": {
+    "role": "专注数据安全与合规审计的研究者（区块链/不可篡改日志）",
+    "style": "假设驱动, 指标优先, 可复现与工程可落地并重"
+  },
+  "research_brief": {
+    "problem": "评估将审计日志进行区块链不可篡改锚定（On-chain/Sidechain/Batch Merkle）对日志完整性、篡改检测、取证与合规成本/延迟的影响；比较与传统集中式WORM/签名链式日志方案。",
+    "context": "对比『区块链锚定（多种锚定频率与批量策略）』与『集中式不可改日志（WORM/签名链）』。若有真实合规模块/SIEM/链上交易数据则走观测；无则采用受控仿真，并以观测分位数校准。",
+    "hypotheses": [
+      "H1: 区块链锚定在同等成本下提升篡改检测率并降低取证争议（audit_integrity_score↑）。",
+      "H2: 过于频繁的上链导致成本与延迟上升，存在批量锚定的最优窗口。",
+      "H3: 在对抗性场景（密钥泄漏/恶意管理员）下，链上锚定能将攻击成功率（未被检测的篡改）显著降低。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的设计改动（锚定频率/批量大小、哈希树结构、链类型与确认数、取证流程、合规留置策略、重组风险缓解），在可控算力内提升统计效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测：CSV路径（可含多日）",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['chain_anchor','centralized_worm']"
+    },
+    "config_schema": {
+      "anchor_frequency_sec": "int  # 平均锚定频率（秒）",
+      "batch_size": "int  # 每次锚定包含日志条数",
+      "chain_confirmations": "int  # 认为不可逆所需确认数",
+      "tx_cost_unit": "float  # 单笔上链成本单位",
+      "reorg_prob": "float  # 重组概率近似 0~1",
+      "adversary_strength": "float  # 对抗强度 0~1（管理员滥用/密钥泄漏概率）",
+      "worm_immutability_factor": "float  # WORM/签名链不可改强度 0~1"
+    },
+    "results_json_keys": [
+      "metric/detection_rate",
+      "metric/false_positive_rate",
+      "metric/audit_integrity_score",
+      "metric/anchoring_latency_sec",
+      "metric/anchoring_cost_unit",
+      "metric/storage_overhead_ratio",
+      "metric/incident_mttd_hours",
+      "metric/legal_hold_success_rate",
+      "metric/throughput_logs_per_sec",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "security_integrity": [
+      "detection_rate（对抗篡改被检测的比例）",
+      "false_positive_rate（正常日志被误报为篡改的比例）",
+      "audit_integrity_score（完整性/可证明度复合分数）"
+    ],
+    "ops_cost_latency": [
+      "anchoring_latency_sec（从生成到不可逆的延迟）",
+      "anchoring_cost_unit（单位时间上链成本）",
+      "storage_overhead_ratio（额外存储/原始日志）",
+      "throughput_logs_per_sec（处理吞吐）"
+    ],
+    "compliance": [
+      "incident_mttd_hours（发现篡改/异常的平均时延）",
+      "legal_hold_success_rate（法律留置/证据保全成功率）"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_security.png",
+      "fig_cost_latency.png",
+      "fig_tradeoff.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作（不可篡改日志/区块链/WORM）",
+      "方法（锚定与取证流程）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究（频率/批量/确认数/重组）",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

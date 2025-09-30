@@ -1,0 +1,26 @@
+[
+  {
+    "title": "批量Merkle锚定 vs 单笔逐条锚定",
+    "motivation": "批量可显著摊薄成本，但增加延迟；需要找最优窗口。",
+    "design_change": "对比 batch_size ∈ {1, 50, 200}，固定日均日志量，测成本与检测率。",
+    "expected_effect": "batch=50 成本/检测率权衡最优。",
+    "metrics": [
+      "anchoring_cost_unit",
+      "anchoring_latency_sec",
+      "detection_rate"
+    ],
+    "threats_to_validity": "真实流量突发性与批量窗口错配。"
+  },
+  {
+    "title": "确认数×重组风险×对抗强度的三因素实验",
+    "motivation": "确认数与重组概率、对抗强度共同决定不可逆性。",
+    "design_change": "3×2×2：conf∈{1,3,6} × reorg_prob∈{0.001,0.01} × adversary∈{0.2,0.6}。",
+    "expected_effect": "conf=3在大多数条件下足够，conf=6 对高对抗强度边际收益下降。",
+    "metrics": [
+      "audit_integrity_score",
+      "incident_mttd_hours",
+      "anchoring_cost_unit"
+    ],
+    "threats_to_validity": "链上重组分布与选链规则简化。"
+  }
+]

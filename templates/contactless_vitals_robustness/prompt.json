@@ -1,0 +1,137 @@
+{
+  "template_id": "contactless_vitals_robustness",
+  "domain": "biomedical_signal_processing",
+  "persona": {
+    "role": "专注非接触式生命体征（rPPG/热红外/ToF/mmWave等）精度与鲁棒性的研究者",
+    "style": "假设驱动, 指标优先, 医工结合, 可复现与工程可落地并重"
+  },
+  "research_brief": {
+    "problem": "系统评估并提升非接触式生命体征提取算法（心率HR/呼吸RR/心率变异HRV）的精度与鲁棒性，重点刻画在运动、光照、肤色、距离、姿态与遮挡等现实因素下的性能退化与对策（时频/时域滤波、波形质量评估WQMs、自适应ROI、时空超分、传感融合等）。",
+    "context": "对比『鲁棒增强管线（WQM门控 + 自适应ROI + 时空滤波 + 多模态/多通道融合）』与『基线管线（固定ROI + 常规带通 + 单模态）』。若有真实数据（参考仪器ECG/胸带/流量计）则走观测；否则采用受控仿真（合成脉搏/呼吸波形 + 多源噪声注入），并以观测分位数校准。",
+    "hypotheses": [
+      "H1: 引入波形质量门控（WQM）与自适应ROI能显著降低强运动与低照下的HR/RR RMSE。",
+      "H2: 多模态/多通道融合在肤色分布不均与远距离场景下可提升覆盖率并降低失效率。",
+      "H3: 过强的时域/频域平滑会压制真实变异，导致HRV偏差；存在最佳平滑强度区间。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib。可选 scipy（若无则使用近似实现）。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的策略（WQM阈值、ROI追踪、时频滤波强度、相位一致性、RANSAC稳健频峰、模态/通道权重自适应），做消融与灵敏度分析。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式CSV/Parquet路径",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['robust_pipeline','baseline_pipeline']"
+    },
+    "config_schema": {
+      "modality": "one_of['rgb','nir','thermal','mmwave','fusion']",
+      "distance_m": "float  # 0.5~5",
+      "illum_lux": "float  # 5~1000",
+      "motion_level": "float  # 0~1（含微表情/头部位移）",
+      "skin_tone": "float  # 0~1（近似Fitzpatrick映射）",
+      "occlusion_ratio": "float  # 0~0.6",
+      "wqm_threshold": "float  # 0~1",
+      "roi_adapt_strength": "float  # 0~1",
+      "temporal_smooth_strength": "float  # 0~1",
+      "spectral_peak_robust": "bool  # 稳健频峰估计",
+      "channels": "int  # 通道数（RGB=3, NIR=1, Fusion>=2）",
+      "fps": "int  # 采样率"
+    },
+    "results_json_keys": [
+      "metric/hr_rmse_bpm",
+      "metric/rr_rmse_bpm",
+      "metric/hr_mae_bpm",
+      "metric/hrv_sdnn_bias",
+      "metric/coverage_rate",
+      "metric/failure_rate",
+      "metric/snr_db",
+      "metric/latency_ms",
+      "metric/power_mw",
+      "metric/bland_altman_loA_hr_low",
+      "metric/bland_altman_loA_hr_high",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "accuracy": [
+      "HR/RR RMSE/MAE（参考ECG/胸带）",
+      "Bland–Altman一致性界限"
+    ],
+    "robustness": [
+      "coverage_rate（有效估计占比）",
+      "failure_rate（失效/无效段占比）",
+      "SNR(dB)"
+    ],
+    "systems": [
+      "latency_ms（端到端时延）",
+      "power_mw（功耗近似）"
+    ],
+    "hrv": [
+      "sdnn_bias（HRV SDNN偏差）"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_acc.png",
+      "fig_robust.png",
+      "fig_ba.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "相关工作（rPPG/热红外/ToF/mmWave）",
+      "方法（鲁棒增强管线）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

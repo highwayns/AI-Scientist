@@ -1,0 +1,26 @@
+[
+  {
+    "title": "批量×窗口×融合的三因素实验",
+    "motivation": "确定在不同并发与RTT下的最优批量/窗口与融合等级组合。",
+    "design_change": "3×2×3：batch{1,4,8} × window{10,30}ms × fusion{0,1,3}；固定stream=8、RTT=10/40ms分层。",
+    "expected_effect": "batch=4, window=10ms, fusion≥1在p99与吞吐上最稳健。",
+    "metrics": [
+      "latency_p99_ms",
+      "throughput_fps",
+      "energy_per_inf_mj"
+    ],
+    "threats_to_validity": "仿真对内存带宽与设备差异建模简化。"
+  },
+  {
+    "title": "零拷贝+NUMA亲和+RT优先级对抖动的影响",
+    "motivation": "I/O与调度路径优化应显著降低抖动与掉帧。",
+    "design_change": "对比 zero_copy/numa/rt 三个布尔开关的全因子组合（2^3）。",
+    "expected_effect": "全开时 jitter↓50%+；cpu_util更平稳。",
+    "metrics": [
+      "jitter_ms",
+      "drop_rate",
+      "cpu_util"
+    ],
+    "threats_to_validity": "真实内核/驱动行为更复杂。"
+  }
+]

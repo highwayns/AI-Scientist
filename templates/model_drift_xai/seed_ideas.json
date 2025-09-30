@@ -1,0 +1,25 @@
+[
+  {
+    "title": "自适应阈值的联合监测（漂移分数分位数门控）",
+    "motivation": "固定阈值在季节性/周期流量下易误报。",
+    "design_change": "将KS/PSI分数混合为综合分，阈值=历史90分位自适应；对比固定阈值。",
+    "expected_effect": "alert_precision↑，avg_alerts_per_day↓。",
+    "metrics": [
+      "alert_precision",
+      "avg_alerts_per_day",
+      "fn_cost"
+    ],
+    "threats_to_validity": "历史窗口选择与概念漂移耦合。"
+  },
+  {
+    "title": "XAI一致性@K 与根因定位延迟（MTTD）的关系",
+    "motivation": "稳定的一致性应当加速定位并减少误报。",
+    "design_change": "比较 Top-K 排名一致性（K∈{3,5,10}）与模拟定位延迟之间的相关性。",
+    "expected_effect": "K=5 时最稳定，告警精度与MTTD最佳。",
+    "metrics": [
+      "xai_consistency",
+      "alert_precision"
+    ],
+    "threats_to_validity": "一致性代理与真实解释方法的偏差。"
+  }
+]

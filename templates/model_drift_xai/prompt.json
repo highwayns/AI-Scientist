@@ -1,0 +1,133 @@
+{
+  "template_id": "model_drift_xai",
+  "domain": "ml_ops_model_reliability",
+  "persona": {
+    "role": "关注可解释性与漂移监测的MLOps研究者",
+    "style": "假设驱动, 指标优先, 可复现与工程可落地并重"
+  },
+  "research_brief": {
+    "problem": "系统评估与对比多种模型漂移检测机制与可解释性一致性指标（XAI-consistency），并量化它们在不同数据漂移/概念漂移场景下对业务风险（如FN代价、告警负担）的影响。",
+    "context": "比较『带XAI一致性与根因定位的联合监测（Joint-Drift+XAI）』与『仅分布/性能监测（Baseline-Drift）』。有真实线上遥测则走观测；否则用可控仿真生成稳定期与漂移期数据流。",
+    "hypotheses": [
+      "H1: 引入XAI一致性监测能显著提升有效告警精度（precision）并降低平均定位时间（MTTD）。",
+      "H2: 在概念漂移（label shift/conditional shift）下，仅分布监测的召回明显不足；联合监测对异常样本FN损失更低。",
+      "H3: 过敏感的监测阈值会导致告警疲劳，存在最优阈值区间。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "需要 pandas, numpy, matplotlib; 可选 shap（若无则走占位的一致性近似）。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的改动（漂移类型/幅度、窗口策略、统计检验、阈值、自适应告警、XAI一致性与稳定性度量），在可控算力内提升统计效度。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_ref": "optional[str]  # 观测：CSV路径前缀或目录，包含 pre.csv 与 post.csv",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['joint_xai','baseline_drift']"
+    },
+    "config_schema": {
+      "drift_type": "one_of['covariate','label','concept','mixed']",
+      "drift_magnitude": "float  # 0~1",
+      "window_size": "int  # 滑窗大小",
+      "alert_threshold": "float  # 告警阈值(检验p或分数)",
+      "use_shap_proxy": "bool  # 无shap库时，使用特征梯度/相关性占位一致性"
+    },
+    "results_json_keys": [
+      "metric/auroc_pre",
+      "metric/auroc_post",
+      "metric/calib_ece_pre",
+      "metric/calib_ece_post",
+      "metric/psi",
+      "metric/kl_div",
+      "metric/ks_p_min",
+      "metric/xai_consistency",
+      "metric/attr_shift",
+      "metric/alert_precision",
+      "metric/alert_recall",
+      "metric/avg_alerts_per_day",
+      "metric/fn_cost",
+      "meta/mode",
+      "meta/treatment",
+      "meta/drift_type",
+      "meta/drift_magnitude"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "performance": [
+      "AUROC（pre/post）",
+      "ECE校准误差（pre/post）"
+    ],
+    "drift": [
+      "PSI/JS/KL/KS最小p值（特征级）"
+    ],
+    "xai": [
+      "xai_consistency（重要性排名的一致性@K）",
+      "attr_shift（平均重要性向量差异L2/1值）"
+    ],
+    "ops": [
+      "alert_precision/recall/alerts_per_day",
+      "fn_cost（漏报损失的期望）"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_perf.png",
+      "fig_drift.png",
+      "fig_xai.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "相关工作（漂移/可解释性）",
+      "方法（联合监测框架）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "template_id": "customizable_ui_ux",
+  "domain": "human_computer_interaction",
+  "persona": {
+    "role": "专注多场景可定制化UI/UX与自适应交互的HCI研究者",
+    "style": "假设驱动, 指标优先, 可复现优先, 强调可用性与可达性"
+  },
+  "research_brief": {
+    "problem": "系统评估‘多场景自适应与可定制化UI’相较‘静态单一UI’在多设备/多输入模态/多用户能力差异下对可用性、效率、可达性与满意度的影响，并刻画自定义深度与性能开销之间的权衡。",
+    "context": "对比『Adaptive/Customizable UI（布局自适应+组件可配置+可达性增强）』与『Static UI（固定布局与样式）』。有真实使用遥测/可用性测试则走观测；否则采用受控仿真（合成用户×场景×设备×输入模态）。",
+    "hypotheses": [
+      "H1: 在场景切换与设备异构时，自适应可定制UI的任务成功率更高、完成时长更短。",
+      "H2: 个性化深度与延迟预算存在最优区间；过深定制在低端设备上会恶化体验。",
+      "H3: 可达性增强（对比度/字号/读屏友好）显著降低错误率并提升SUS分数，尤其在高视觉负担任务。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的改动（自适应策略、个性化深度、布局密度、对比度/字号、输入模态切换、延迟预算），做消融与灵敏度分析。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式CSV路径（可用可用性测试导出）",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['adaptive_ui','static_ui']"
+    },
+    "config_schema": {
+      "personalization_depth": "float  # 个性化深度0~1（布局/主题/快捷操作）",
+      "latency_budget_ms": "int  # 允许的UI适配额外延迟预算",
+      "accessibility_contrast": "float  # 对比度等级（WCAG近似）",
+      "font_scale": "float  # 字号缩放 0.8~1.6",
+      "layout_density": "float  # 布局密度 0.6~1.4",
+      "device_class": "one_of['mobile','tablet','desktop']",
+      "input_mix_touch_ratio": "float  # 触控占比 0~1，其余为键鼠/语音",
+      "context_switch_rate": "float  # 场景切换率 0~1（室内/室外/移动中）"
+    },
+    "results_json_keys": [
+      "metric/task_success_rate",
+      "metric/avg_completion_time_s",
+      "metric/error_rate",
+      "metric/sus_score",
+      "metric/nasa_tlx",
+      "metric/scroll_depth_ratio",
+      "metric/viewport_utilization",
+      "metric/interaction_latency_ms",
+      "metric/accessibility_events_per_min",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "usability": [
+      "task_success_rate（完成关键路径任务的比例）",
+      "avg_completion_time_s（平均完成时长）",
+      "error_rate（任务中断/误触/错误提交比例）",
+      "sus_score（系统可用性量表，0~100）",
+      "nasa_tlx（主观负荷指数，越低越好）"
+    ],
+    "interaction": [
+      "interaction_latency_ms（首交互/响应延迟）",
+      "scroll_depth_ratio（滚动深度/内容总长）",
+      "viewport_utilization（可视区域信息密度）",
+      "accessibility_events_per_min（缩放/高对比/读屏触发频率）"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_main.png",
+      "fig_quality.png",
+      "fig_latency.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作（自适应UI/可定制化/可达性）",
+      "方法（策略与实现）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

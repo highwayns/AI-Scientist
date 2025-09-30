@@ -1,0 +1,28 @@
+[
+  {
+    "title": "WQM门控×自适应ROI×稳健频峰 的三因素实验",
+    "motivation": "低质波段的剔除与ROI动态更新可降低运动与低照带来的误差；稳健频峰缓解频域假峰。",
+    "design_change": "3×2×2：wqm{0.4,0.6,0.8} × roi{0,1} × robust_peak{0,1}；分层distance∈{0.5,2.0}m, illum∈{20,200}lux。",
+    "expected_effect": "wqm≥0.6 + roi=1 + robust_peak=1 时HR/RR RMSE显著下降，覆盖率↑。",
+    "metrics": [
+      "hr_rmse_bpm",
+      "rr_rmse_bpm",
+      "coverage_rate",
+      "failure_rate"
+    ],
+    "threats_to_validity": "WQM阈值与真实设备噪声分布的偏差。"
+  },
+  {
+    "title": "多模态融合在肤色与距离敏感性的缓解作用",
+    "motivation": "融合可提升深色肤色与远距离条件下的信噪与稳定性。",
+    "design_change": "modality∈{rgb, nir, fusion}；skin_tone∈{0.2,0.8}；distance∈{1.0,3.0}m。",
+    "expected_effect": "fusion在skin_tone=0.8或distance≥3m时的coverage与RMSE优于单模态。",
+    "metrics": [
+      "hr_rmse_bpm",
+      "coverage_rate",
+      "snr_db",
+      "power_mw"
+    ],
+    "threats_to_validity": "融合权重与同步误差的简化。"
+  }
+]

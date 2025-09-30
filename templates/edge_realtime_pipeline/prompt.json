@@ -1,0 +1,138 @@
+{
+  "template_id": "edge_realtime_pipeline",
+  "domain": "edge_computing_streaming",
+  "persona": {
+    "role": "专注边缘端实时处理与低延迟流水线优化的系统研究者",
+    "style": "假设驱动, 指标优先, 可复现与工程可落地并重"
+  },
+  "research_brief": {
+    "problem": "系统评估‘边缘端优化流水线（算子融合/零拷贝/实时调度/分片与量化）’相较‘基线流水线’在尾延迟、抖动、吞吐与能耗上的收益，并刻画在多流并发与网络时延波动下的稳定性。",
+    "context": "对比『Optimized Pipeline（fusion+zero-copy+RT priority+NUMA/affinity+warm pool+量化/分片）』与『Baseline Pipeline（无特别优化）』。若有真实端测/遥测CSV则走观测；否则采用受控仿真（基于排队与服务时间合成）。",
+    "hypotheses": [
+      "H1: 算子融合+零拷贝对 p95/p99 延迟下降最显著，尤其在多流并发负载。",
+      "H2: 适度批处理与窗口化在不破坏实时性的前提下可提高吞吐与能效，但过大批量将恶化尾延迟。",
+      "H3: 预热池与冷启动抑制对突发流量的 p99 抖动改善明显。"
+    ]
+  },
+  "baseline": {
+    "entrypoint": "experiment.py",
+    "out_arg": "--out_dir",
+    "runnable_notes": "依赖 pandas, numpy, matplotlib。"
+  },
+  "idea_generation": {
+    "task_brief": "提出小而可测的改动（批量/窗口、融合等级、零拷贝、亲和/NUMA、RT优先级、预热池大小、量化位宽、缓存策略），做消融与灵敏度分析。",
+    "must_include_fields": [
+      "title",
+      "motivation",
+      "design_change",
+      "expected_effect",
+      "metrics",
+      "threats_to_validity"
+    ],
+    "scoring": {
+      "validity": true,
+      "feasibility": true,
+      "novelty": true
+    },
+    "n_candidates": 8,
+    "selection_rule": "按(0.5*validity + 0.3*feasibility + 0.2*novelty)排序选Top-2"
+  },
+  "experiment_contract": {
+    "inputs": {
+      "mode": "one_of['observational','simulation']",
+      "dataset_path": "optional[str]  # 观测模式CSV路径（端测遥测）",
+      "seed": "int",
+      "treatments": "list[str]  # 例如 ['optimized_pipeline','baseline_pipeline']"
+    },
+    "config_schema": {
+      "batch_size": "int  # 批大小（1 表示逐条）",
+      "window_ms": "int  # 窗口聚合时间",
+      "fusion_level": "int  # 算子融合级别 0~3",
+      "quant_bits": "int  # 量化位宽 8/16/32",
+      "zero_copy": "bool  # 零拷贝 I/O",
+      "numa_affinity": "bool  # NUMA/CPU亲和",
+      "rt_priority": "bool  # 实时优先级/调度",
+      "cache_policy": "one_of['none','lru','2q']",
+      "warm_pool_size": "int  # 预热实例数",
+      "cold_start_ms": "int  # 冷启动时延",
+      "network_rtt_ms": "int  # 边缘到设备平均RTT",
+      "device_class": "one_of['edge_cpu','edge_gpu','edge_npu']",
+      "stream_count": "int  # 同时并发流数",
+      "load_factor": "float  # 负载系数 0~2"
+    },
+    "results_json_keys": [
+      "metric/latency_p50_ms",
+      "metric/latency_p95_ms",
+      "metric/latency_p99_ms",
+      "metric/jitter_ms",
+      "metric/throughput_fps",
+      "metric/drop_rate",
+      "metric/cpu_util",
+      "metric/memory_bw_gbps",
+      "metric/energy_per_inf_mj",
+      "metric/cache_hit_ratio",
+      "metric/cold_start_rate",
+      "meta/mode",
+      "meta/treatment"
+    ],
+    "expected_outputs": [
+      "results.json",
+      "per_run_metrics.csv",
+      "series.npy"
+    ]
+  },
+  "metrics_definition": {
+    "latency": [
+      "p50/p95/p99 端到端延迟（含网络/队列/执行）",
+      "jitter（p95-p50）"
+    ],
+    "throughput_reliability": [
+      "throughput_fps（每秒帧/样本数）",
+      "drop_rate（掉帧/丢包率）",
+      "cold_start_rate（冷启触发比例）",
+      "cache_hit_ratio（模型/特征缓存命中）"
+    ],
+    "resources": [
+      "cpu_util（平均CPU占用）",
+      "memory_bw_gbps（估算内存带宽）",
+      "energy_per_inf_mj（单次推理能耗）"
+    ]
+  },
+  "plotting": {
+    "script": "plot.py",
+    "artifacts": [
+      "fig_latency.png",
+      "fig_throughput.png",
+      "fig_resource.png"
+    ],
+    "captions_expectation": "每图2句描述，包含样本量与效应大小。"
+  },
+  "paper": {
+    "latex_template": "latex/template.tex",
+    "sections": [
+      "摘要",
+      "引言",
+      "背景与相关工作（边缘计算/低延迟流水线）",
+      "方法（融合/零拷贝/调度/量化/预热）",
+      "指标与效度",
+      "实验",
+      "结果",
+      "消融研究",
+      "效度威胁",
+      "局限",
+      "结论",
+      "参考文献"
+    ],
+    "language": "Chinese",
+    "citation_style": "numeric"
+  },
+  "safety_limits": {
+    "max_runtime_minutes": 120,
+    "network_access": "disabled",
+    "denylist_packages": [
+      "subprocess",
+      "git",
+      "pip"
+    ]
+  }
+}

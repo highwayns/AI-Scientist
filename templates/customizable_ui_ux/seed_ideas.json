@@ -1,0 +1,26 @@
+[
+  {
+    "title": "个性化深度 × 延迟预算 的权衡实验",
+    "motivation": "更深个性化可能带来逻辑与渲染成本，影响交互延迟。",
+    "design_change": "2×3：personalization_depth{0.4,0.8} × latency_budget_ms{50,150,300}",
+    "expected_effect": "存在最优区间（0.6~0.8, ≤150ms）使SUS↑、时长↓。",
+    "metrics": [
+      "sus_score",
+      "avg_completion_time_s",
+      "interaction_latency_ms"
+    ],
+    "threats_to_validity": "仿真成本模型与真实端侧差异。"
+  },
+  {
+    "title": "可达性增强（对比度/字号）对错误率与主观负荷的影响",
+    "motivation": "在强光/移动场景，高对比度与适当字号能降低误触与视觉负担。",
+    "design_change": "contrast{AA, AAA近似→值0.5,0.8} × font_scale{1.0,1.3,1.6}",
+    "expected_effect": "error_rate↓、nasa_tlx↓，但极大字号导致视口利用率下降。",
+    "metrics": [
+      "error_rate",
+      "nasa_tlx",
+      "viewport_utilization"
+    ],
+    "threats_to_validity": "用户多样性与真实任务复杂度未覆盖。"
+  }
+]
